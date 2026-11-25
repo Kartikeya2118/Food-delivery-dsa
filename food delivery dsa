@@ -1,0 +1,187 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define V 5
+#define INF 9999
+
+// Available locations
+char *places[V] = {
+    "Location 0",
+    "Location 1",
+    "Location 2",
+    "Location 3",
+    "Location 4"
+};
+
+// Graph represented using Adjacency Matrix
+int graph[V][V] = {
+    {0, 4, 2, 0, 0},
+    {4, 0, 1, 5, 0},
+    {2, 1, 0, 8, 10},
+    {0, 5, 8, 0, 2},
+    {0, 0, 10, 2, 0}
+};
+
+// Function to add random traffic
+void addTraffic()
+{
+    printf("\n--- RANDOM TRAFFIC UPDATE ---\n");
+
+    for(int i = 0; i < V; i++)
+    {
+        for(int j = i + 1; j < V; j++)
+        {
+            if(graph[i][j] != 0)
+            {
+                int traffic = rand() % 6;
+
+                graph[i][j] += traffic;
+                graph[j][i] += traffic;
+
+                printf("%s - %s : Traffic +%d, New Weight = %d\n",
+                       places[i], places[j],
+                       traffic, graph[i][j]);
+            }
+        }
+    }
+}
+
+// Dijkstra's Shortest Path Algorithm
+void dijkstra(int src, int dest)
+{
+    int dist[V], visited[V] = {0};
+    int parent[V];
+
+    // Initialize arrays
+    for(int i = 0; i < V; i++)
+    {
+        dist[i] = INF;
+        parent[i] = -1;
+    }
+
+    dist[src] = 0;
+
+    // Find shortest path
+    for(int count = 0; count < V - 1; count++)
+    {
+        int min = INF, u = -1;
+
+        // Find unvisited node with minimum distance
+        for(int i = 0; i < V; i++)
+        {
+            if(!visited[i] && dist[i] < min)
+            {
+                min = dist[i];
+                u = i;
+            }
+        }
+
+        if(u == -1)
+            break;
+
+        visited[u] = 1;
+
+        // Update neighbouring nodes
+        for(int v = 0; v < V; v++)
+        {
+            if(graph[u][v] != 0 &&
+               !visited[v] &&
+               dist[u] + graph[u][v] < dist[v])
+            {
+                dist[v] = dist[u] + graph[u][v];
+                parent[v] = u;
+            }
+        }
+    }
+
+    // Check if destination is reachable
+    if(dist[dest] == INF)
+    {
+        printf("\nNo route available!\n");
+        return;
+    }
+
+    // Reconstruct shortest path
+    int path[V], k = 0;
+    int current = dest;
+
+    while(current != -1)
+    {
+        path[k++] = current;
+        current = parent[current];
+    }
+
+    // Display delivery result
+    printf("\n========== DELIVERY RESULT ==========\n");
+
+    printf("Restaurant: %s\n", places[src]);
+    printf("Customer: %s\n", places[dest]);
+
+    printf("\nBest Delivery Route:\n");
+
+    for(int i = k - 1; i >= 0; i--)
+    {
+        printf("%s", places[path[i]]);
+
+        if(i > 0)
+            printf(" -> ");
+    }
+
+    printf("\n\nTotal Route Cost: %d\n", dist[dest]);
+
+    printf("=====================================\n");
+}
+
+// Main Function
+int main()
+{
+    int source, destination;
+
+    srand(time(0));
+
+    printf("=====================================\n");
+    printf("     FOOD DELIVERY DISPATCH SYSTEM\n");
+    printf("=====================================\n");
+
+    // Display available locations
+    printf("\nAVAILABLE LOCATIONS:\n");
+
+    for(int i = 0; i < V; i++)
+    {
+        printf("%d. %s\n", i, places[i]);
+    }
+
+    // Select restaurant location
+    printf("\nSelect Restaurant Location (0-4): ");
+    scanf("%d", &source);
+
+    // Select customer location
+    printf("Select Customer Location (0-4): ");
+    scanf("%d", &destination);
+
+    // Validate input
+    if(source < 0 || source >= V ||
+       destination < 0 || destination >= V)
+    {
+        printf("\nInvalid location selected!\n");
+        return 0;
+    }
+
+    if(source == destination)
+    {
+        printf("\nRestaurant and Customer are at the same location!\n");
+        return 0;
+    }
+
+    // Add random traffic
+    addTraffic();
+
+    // Calculate best delivery route
+    printf("\nCalculating Best Delivery Route...\n");
+
+    dijkstra(source, destination);
+
+    return 0;
+}
